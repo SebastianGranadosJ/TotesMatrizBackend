@@ -34,15 +34,16 @@ func SetupAndRunApp() error {
 	db = database.GetDB()
 	router = gin.Default()
 	database.MigrateDB()
-  
+
+	setUpUserRouter()
 	setUpItemTypeRouter()
 	setUpItemRouter()
-  setUpPermissionRouter()
+	setUpPermissionRouter()
 	setUpRoleRouter()
 	setUpUserTypeRouter()
 	setUpIdentifierTypeRouter()
 	setUpUserStateTypeRouter()
-
+	setUpEmployeeRouter()
 
 	router.Run("localhost:8080")
 
@@ -53,6 +54,13 @@ func setUpPermissionRouter() {
 	permissionService := services.NewPermissionService(permissionRepo)
 	permissionController := controllers.NewPermissionController(permissionService)
 	routes.RegisterPermissionRoutes(router, permissionController)
+}
+
+func setUpEmployeeRouter() {
+	employeeRepo := repositories.NewEmployeeRepository(db)
+	employeeService := services.NewEmployeeService(employeeRepo)
+	employeeController := controllers.NewEmployeeController(employeeService)
+	routes.RegisterEmployeeRoutes(router, employeeController)
 }
 
 func setUpRoleRouter() {
@@ -95,4 +103,11 @@ func setUpIdentifierTypeRouter() {
 	identifierTypeService := services.NewIdentifierTypeService(identifierTypeRepo)
 	identifierTypeController := controllers.NewIdentifierTypeController(identifierTypeService)
 	routes.RegisterIdentifierTypeRoutes(router, identifierTypeController)
+}
+
+func setUpUserRouter() {
+	userRepo := repositories.NewUserRepository(db)
+	userService := services.NewUserService(userRepo)
+	userController := controllers.NewUserController(userService)
+	routes.RegisterUserRoutes(router, userController)
 }

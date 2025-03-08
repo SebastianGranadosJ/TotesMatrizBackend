@@ -17,6 +17,19 @@ func NewRoleController(service *services.RoleService) *RoleController {
 	return &RoleController{Service: service}
 }
 
+func (rc *RoleController) GetAllRoles(c *gin.Context) {
+	username := c.GetHeader("Username")
+	fmt.Println("Request made by user:", username)
+
+	roles, err := rc.Service.GetAllRoles()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error retrieving roles"})
+		return
+	}
+
+	c.JSON(http.StatusOK, roles)
+}
+
 func (rc *RoleController) GetRoleByID(c *gin.Context) {
 	username := c.GetHeader("Username")
 	fmt.Println("Request made by user:", username)

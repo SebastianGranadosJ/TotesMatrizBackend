@@ -7,14 +7,11 @@ import (
 )
 
 func RegisterItemTypeRoutes(router *gin.Engine, controller *controllers.ItemTypeController) {
-
 	router.GET("/item-type", controller.GetItemTypes)
 	router.GET("/item-type/:id", controller.GetItemTypeByID)
-
 }
 
 func RegisterItemRoutes(router *gin.Engine, controller *controllers.ItemController) {
-
 	router.GET("/item/:id", controller.GetItemByID)
 	router.GET("/item", controller.GetAllItems)
 	router.GET("/item/searchById", controller.SearchItemsByID)
@@ -24,29 +21,22 @@ func RegisterItemRoutes(router *gin.Engine, controller *controllers.ItemControll
 }
 
 func RegisterPermissionRoutes(router *gin.Engine, controller *controllers.PermissionController) {
-	permissions := router.Group("/permissions")
-	{
-		permissions.GET("/", controller.GetAllPermissions)    //sirve
-		permissions.GET("/:id", controller.GetPermissionByID) //sirve
-	}
+	router.GET("/permissions/", controller.GetAllPermissions)
+	router.GET("/permissions/:id", controller.GetPermissionByID)
 }
 
+// //
 func RegisterRoleRoutes(router *gin.Engine, controller *controllers.RoleController) {
-	roles := router.Group("/roles")
-	{
-		roles.GET("/:id", controller.GetRoleByID)                         // sirve
-		roles.GET("/:id/permissions", controller.GetAllPermissionsOfRole) // sirve
-		roles.GET("/:id/exists", controller.ExistRole)                    // sirve
-	}
+	router.GET("/roles/:id", controller.GetRoleByID)
+	router.GET("/roles/:id/permissions", controller.GetAllPermissionsOfRole)
+	router.GET("/roles/:id/exists", controller.ExistRole)
+	router.GET("/roles/", controller.GetAllRoles)
 }
 
 func RegisterUserTypeRoutes(router *gin.Engine, controller *controllers.UserTypeController) {
-	userTypes := router.Group("/user-types")
-	{
-		userTypes.GET("/", controller.ObtainAllUserTypes)
-		userTypes.GET("/:id", controller.ObtainUserTypeByID)
-		userTypes.GET("/:id/exists", controller.Exists)
-	}
+	router.GET("/user-types/", controller.ObtainAllUserTypes)
+	router.GET("/user-types/:id", controller.ObtainUserTypeByID)
+	router.GET("/user-types/:id/exists", controller.Exists)
 }
 
 func RegisterUserStateTypeRoutes(router *gin.Engine, controller *controllers.UserStateTypeController) {
@@ -57,4 +47,22 @@ func RegisterUserStateTypeRoutes(router *gin.Engine, controller *controllers.Use
 func RegisterIdentifierTypeRoutes(router *gin.Engine, controller *controllers.IdentifierTypeController) {
 	router.GET("/identifier-type", controller.GetIdentifierTypes)
 	router.GET("/identifier-type/:id", controller.GetIdentifierTypeByID)
+}
+
+func RegisterUserRoutes(router *gin.Engine, controller *controllers.UserController) {
+	router.GET("/users", controller.GetAllUsers)
+	router.GET("/users/:id", controller.GetUserByID)
+	router.GET("/users/:id/exists", controller.SearchUsersByID)
+	router.GET("/users/search", controller.SearchUsersByEmail)
+	router.PATCH("/users/:id/state", controller.UpdateUserState)
+	router.PUT("/users/:id", controller.UpdateUser)
+}
+
+func RegisterEmployeeRoutes(router *gin.Engine, controller *controllers.EmployeeController) {
+	router.GET("/employees/", controller.GetAllEmployees)
+	router.GET("/employees/:id", controller.GetEmployeeByID)
+	router.GET("/employees/search", controller.SearchEmployeesByName)
+	router.POST("/employees/", controller.CreateEmployee)
+	router.PUT("/employees/:id", controller.UpdateEmployee)
+	router.DELETE("/employees/:id", controller.DeleteEmployee)
 }

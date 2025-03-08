@@ -14,6 +14,15 @@ func NewRoleRepository(db *gorm.DB) *RoleRepository {
 	return &RoleRepository{DB: db}
 }
 
+func (r *RoleRepository) GetAllRoles() ([]models.Role, error) {
+	var roles []models.Role
+	err := r.DB.Find(&roles).Error
+	if err != nil {
+		return nil, err
+	}
+	return roles, nil
+}
+
 func (r *RoleRepository) GetRoleByID(id uint) (*models.Role, error) {
 	var role models.Role
 	err := r.DB.Preload("Permissions").First(&role, "id = ?", id).Error

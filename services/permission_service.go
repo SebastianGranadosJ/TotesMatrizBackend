@@ -1,7 +1,6 @@
 package services
 
 import (
-	"errors"
 	"totesbackend/models"
 	"totesbackend/repositories"
 )
@@ -15,17 +14,9 @@ func NewPermissionService(repo *repositories.PermissionRepository) *PermissionSe
 }
 
 func (s *PermissionService) GetPermissionByID(id uint) (*models.Permission, error) {
-	permission, err := s.Repo.GetPermissionByID(id)
-	if err != nil {
-		return nil, errors.New("permiso no encontrado")
-	}
-	return permission, nil
+	return s.Repo.GetPermissionByID(id)
 }
 
 func (s *PermissionService) GetAllPermissions() ([]models.Permission, error) {
-	permissions, err := s.Repo.GetAllPermissions()
-	if err != nil {
-		return nil, errors.New("error al obtener los permisos")
-	}
-	return permissions, nil
+	return s.Repo.GetAllPermissions()
 }
