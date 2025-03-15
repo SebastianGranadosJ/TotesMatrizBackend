@@ -43,7 +43,7 @@ func (r *UserRepository) GetAllUsers() ([]models.User, error) {
 
 func (r *UserRepository) SearchUsersByID(query string) ([]models.User, error) {
 	var users []models.User
-	err := r.DB.Preload("UserStateType").Preload("UserType").Where("id LIKE ?", query+"%").Find(&users).Error
+	err := r.DB.Preload("UserStateType").Preload("UserType").Where("CAST(id AS TEXT) LIKE ?", query+"%").Find(&users).Error
 	if err != nil {
 		return nil, err
 	}

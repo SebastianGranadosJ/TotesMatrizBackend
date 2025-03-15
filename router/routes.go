@@ -63,10 +63,8 @@ func RegisterUserRoutes(router *gin.Engine, controller *controllers.UserControll
 }
 
 func RegisterEmployeeRoutes(router *gin.Engine, controller *controllers.EmployeeController) {
-
 	router.GET("/employee/", controller.GetAllEmployees)
 	router.GET("/employee/:id", controller.GetEmployeeByID)
-
 	router.GET("/employee/searchEmployeesByName", controller.SearchEmployeesByName)
 	router.POST("/employee/", controller.CreateEmployee)
 	router.PUT("/employee/:id", controller.UpdateEmployee)
@@ -115,4 +113,20 @@ func RegisterCustomerRoutes(router *gin.Engine, controller *controllers.Customer
 	router.GET("/customer/email/:email", controller.GetCustomerByEmail)
 	router.POST("/customer", controller.CreateCustomer)
 	router.PUT("/customer/:id", controller.UpdateCustomer)
+}
+
+func RegisterOrderStateTypeRoutes(router *gin.Engine, controller *controllers.OrderStateTypeController) {
+	router.GET("/order-state-type", controller.GetOrderStateTypes)
+	router.GET("/order-state-type/:id", controller.GetOrderStateTypeByID)
+}
+
+func RegisterPurchaseOrderRoutes(router *gin.Engine, controller *controllers.PurchaseOrderController) {
+	router.GET("/purchaseorder/:id", controller.GetPurchaseOrderByID)
+	router.GET("/purchaseorder", controller.GetAllPurchaseOrders)
+	router.GET("/purchaseorder/searchByID", controller.SearchPurchaseOrdersByID)                //UNO DE LOS PROBLEMAS
+	router.GET("/purchaseorder/customer/:customerID", controller.GetPurchaseOrdersByCustomerID) //NO FUNKA
+	router.GET("/purchaseorder/seller/:sellerID", controller.GetPurchaseOrdersBySellerID)
+	router.POST("/purchaseorder", controller.CreatePurchaseOrder)
+	router.PUT("/purchaseorder/:id", controller.UpdatePurchaseOrder)
+	router.PATCH("/purchaseorder/:id/state", controller.UpdatePurchaseOrderState)
 }

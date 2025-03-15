@@ -62,6 +62,8 @@ func SetupAndRunApp() error {
 	setUpUserLogRouter()
 	setUpAppointmentRouter()
 	setUpCustomerRouter()
+	setUpOrderStateTypeRouter()
+	setUpPurchaseOrderRouter()
 
 	router.Run("localhost:8080")
 
@@ -164,6 +166,7 @@ func setUpUserLogRouter() {
 	userLogService := services.NewUserLogService(userLogRepo)
 	userLogController := controllers.NewUserLogController(userLogService)
 	routes.RegisterUserLogRoutes(router, userLogController)
+}
 
 func setUpAppointmentRouter() {
 	appointmentRepo := repositories.NewAppointmentRepository(db)
@@ -178,4 +181,18 @@ func setUpCustomerRouter() {
 	customerController := controllers.NewCustomerController(customerService)
 	routes.RegisterCustomerRoutes(router, customerController)
 
+}
+
+func setUpOrderStateTypeRouter() {
+	orderStateTypeRepo := repositories.NewOrderStateTypeRepository(db)
+	orderStateTypeService := services.NewOrderStateTypeService(orderStateTypeRepo)
+	orderStateTypeController := controllers.NewOrderStateTypeController(orderStateTypeService)
+	routes.RegisterOrderStateTypeRoutes(router, orderStateTypeController)
+}
+
+func setUpPurchaseOrderRouter() {
+	purchaseOrderRepo := repositories.NewPurchaseOrderRepository(db)
+	purchaseOrderService := services.NewPurchaseOrderService(purchaseOrderRepo)
+	purchaseOrderController := controllers.NewPurchaseOrderController(purchaseOrderService)
+	routes.RegisterPurchaseOrderRoutes(router, purchaseOrderController)
 }
