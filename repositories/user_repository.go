@@ -79,6 +79,10 @@ func (r *UserRepository) UpdateUser(user *models.User) error {
 	if err := r.DB.Preload("UserStateType").Preload("UserType").First(&existingUser, "id = ?", user.ID).Error; err != nil {
 		return err
 	}
+	// Realizar la actualización
+	if err := r.DB.Model(&existingUser).Updates(user).Error; err != nil {
+		return err
+	}
 	return nil
 }
 

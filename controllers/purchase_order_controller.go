@@ -1,8 +1,9 @@
 package controllers
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"totesbackend/config"
 	"totesbackend/controllers/utilities"
@@ -11,7 +12,6 @@ import (
 	"totesbackend/services"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 type PurchaseOrderController struct {
@@ -30,11 +30,16 @@ func (poc *PurchaseOrderController) GetPurchaseOrderByID(c *gin.Context) {
 		return
 	}
 
-	query := c.Param("id")
-
-	purchaseOrder, err := poc.Service.GetPurchaseOrderByID(query)
+	idParam := c.Param("id")
+	id, err := strconv.Atoi(idParam)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid purchaseOrder ID"})
+		return
+	}
+
+	purchaseOrder, err := poc.Service.GetPurchaseOrderByID(strconv.Itoa(id))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "purchaseOrder not found"})
 		return
 	}
 
@@ -47,7 +52,11 @@ func (poc *PurchaseOrderController) GetPurchaseOrderByID(c *gin.Context) {
 		SubTotal:      purchaseOrder.SubTotal,
 		Total:         purchaseOrder.Total,
 		OrderStateID:  purchaseOrder.OrderStateID,
+		Items:         extractPurchaseOrderBillingItems(purchaseOrder.Items),
+		Discounts:     extractDiscountIds(purchaseOrder.Discounts),
+		Taxes:         extractTaxIds(purchaseOrder.Taxes),
 	}
+	fmt.Print(purchaseOrder)
 
 	c.JSON(http.StatusOK, purchaseOrderDTO)
 }
@@ -65,22 +74,24 @@ func (poc *PurchaseOrderController) GetAllPurchaseOrders(c *gin.Context) {
 		return
 	}
 
-	var purchaseOrdersDTO []dtos.GetPurchaseOrderDTO
-	for _, order := range purchaseOrders {
-		orderDTO := dtos.GetPurchaseOrderDTO{
-			ID:            order.ID,
-			SellerID:      order.SellerID,
-			CustomerID:    order.CustomerID,
-			ResponsibleID: order.ResponsibleID,
-			DateTime:      order.DateTime,
-			SubTotal:      order.SubTotal,
-			Total:         order.Total,
-			OrderStateID:  order.OrderStateID,
-		}
-		purchaseOrdersDTO = append(purchaseOrdersDTO, orderDTO)
+	var purchaseOrderDTOs []dtos.GetPurchaseOrderDTO
+	for _, purchaseOrder := range purchaseOrders {
+		purchaseOrderDTOs = append(purchaseOrderDTOs, dtos.GetPurchaseOrderDTO{
+			ID:            purchaseOrder.ID,
+			SellerID:      purchaseOrder.SellerID,
+			CustomerID:    purchaseOrder.CustomerID,
+			ResponsibleID: purchaseOrder.ResponsibleID,
+			DateTime:      purchaseOrder.DateTime,
+			SubTotal:      purchaseOrder.SubTotal,
+			Total:         purchaseOrder.Total,
+			OrderStateID:  purchaseOrder.OrderStateID,
+			Items:         extractPurchaseOrderBillingItems(purchaseOrder.Items),
+			Discounts:     extractDiscountIds(purchaseOrder.Discounts),
+			Taxes:         extractTaxIds(purchaseOrder.Taxes),
+		})
 	}
 
-	c.JSON(http.StatusOK, purchaseOrdersDTO)
+	c.JSON(http.StatusOK, purchaseOrderDTOs)
 }
 
 func (poc *PurchaseOrderController) SearchPurchaseOrdersByID(c *gin.Context) {
@@ -91,7 +102,6 @@ func (poc *PurchaseOrderController) SearchPurchaseOrdersByID(c *gin.Context) {
 	}
 
 	id := c.Query("id")
-
 	if id == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Query parameter is required"})
 		return
@@ -108,22 +118,24 @@ func (poc *PurchaseOrderController) SearchPurchaseOrdersByID(c *gin.Context) {
 		return
 	}
 
-	var purchaseOrdersDTO []dtos.GetPurchaseOrderDTO
-	for _, order := range purchaseOrders {
-		orderDTO := dtos.GetPurchaseOrderDTO{
-			ID:            order.ID,
-			SellerID:      order.SellerID,
-			CustomerID:    order.CustomerID,
-			ResponsibleID: order.ResponsibleID,
-			DateTime:      order.DateTime,
-			SubTotal:      order.SubTotal,
-			Total:         order.Total,
-			OrderStateID:  order.OrderStateID,
-		}
-		purchaseOrdersDTO = append(purchaseOrdersDTO, orderDTO)
+	var purchaseOrderDTOs []dtos.GetPurchaseOrderDTO
+	for _, purchaseOrder := range purchaseOrders {
+		purchaseOrderDTOs = append(purchaseOrderDTOs, dtos.GetPurchaseOrderDTO{
+			ID:            purchaseOrder.ID,
+			SellerID:      purchaseOrder.SellerID,
+			CustomerID:    purchaseOrder.CustomerID,
+			ResponsibleID: purchaseOrder.ResponsibleID,
+			DateTime:      purchaseOrder.DateTime,
+			SubTotal:      purchaseOrder.SubTotal,
+			Total:         purchaseOrder.Total,
+			OrderStateID:  purchaseOrder.OrderStateID,
+			Items:         extractPurchaseOrderBillingItems(purchaseOrder.Items),
+			Discounts:     extractDiscountIds(purchaseOrder.Discounts),
+			Taxes:         extractTaxIds(purchaseOrder.Taxes),
+		})
 	}
 
-	c.JSON(http.StatusOK, purchaseOrdersDTO)
+	c.JSON(http.StatusOK, purchaseOrderDTOs)
 }
 
 func (poc *PurchaseOrderController) GetPurchaseOrdersByCustomerID(c *gin.Context) {
@@ -133,7 +145,7 @@ func (poc *PurchaseOrderController) GetPurchaseOrdersByCustomerID(c *gin.Context
 		return
 	}
 
-	customerID := c.Param("customer_id")
+	customerID := c.Param("customerID")
 
 	purchaseOrders, err := poc.Service.GetPurchaseOrdersByCustomerID(customerID)
 	if err != nil {
@@ -146,22 +158,24 @@ func (poc *PurchaseOrderController) GetPurchaseOrdersByCustomerID(c *gin.Context
 		return
 	}
 
-	var purchaseOrdersDTO []dtos.GetPurchaseOrderDTO
-	for _, order := range purchaseOrders {
-		orderDTO := dtos.GetPurchaseOrderDTO{
-			ID:            order.ID,
-			SellerID:      order.SellerID,
-			CustomerID:    order.CustomerID,
-			ResponsibleID: order.ResponsibleID,
-			DateTime:      order.DateTime,
-			SubTotal:      order.SubTotal,
-			Total:         order.Total,
-			OrderStateID:  order.OrderStateID,
-		}
-		purchaseOrdersDTO = append(purchaseOrdersDTO, orderDTO)
+	var purchaseOrderDTOs []dtos.GetPurchaseOrderDTO
+	for _, purchaseOrder := range purchaseOrders {
+		purchaseOrderDTOs = append(purchaseOrderDTOs, dtos.GetPurchaseOrderDTO{
+			ID:            purchaseOrder.ID,
+			SellerID:      purchaseOrder.SellerID,
+			CustomerID:    purchaseOrder.CustomerID,
+			ResponsibleID: purchaseOrder.ResponsibleID,
+			DateTime:      purchaseOrder.DateTime,
+			SubTotal:      purchaseOrder.SubTotal,
+			Total:         purchaseOrder.Total,
+			OrderStateID:  purchaseOrder.OrderStateID,
+			Items:         extractPurchaseOrderBillingItems(purchaseOrder.Items),
+			Discounts:     extractDiscountIds(purchaseOrder.Discounts),
+			Taxes:         extractTaxIds(purchaseOrder.Taxes),
+		})
 	}
 
-	c.JSON(http.StatusOK, purchaseOrdersDTO)
+	c.JSON(http.StatusOK, purchaseOrderDTOs)
 }
 
 func (poc *PurchaseOrderController) GetPurchaseOrdersBySellerID(c *gin.Context) {
@@ -179,22 +193,24 @@ func (poc *PurchaseOrderController) GetPurchaseOrdersBySellerID(c *gin.Context) 
 		return
 	}
 
-	var purchaseOrdersDTO []dtos.GetPurchaseOrderDTO
-	for _, order := range purchaseOrders {
-		orderDTO := dtos.GetPurchaseOrderDTO{
-			ID:            order.ID,
-			SellerID:      order.SellerID,
-			CustomerID:    order.CustomerID,
-			ResponsibleID: order.ResponsibleID,
-			DateTime:      order.DateTime,
-			SubTotal:      order.SubTotal,
-			Total:         order.Total,
-			OrderStateID:  order.OrderStateID,
-		}
-		purchaseOrdersDTO = append(purchaseOrdersDTO, orderDTO)
+	var purchaseOrderDTOs []dtos.GetPurchaseOrderDTO
+	for _, purchaseOrder := range purchaseOrders {
+		purchaseOrderDTOs = append(purchaseOrderDTOs, dtos.GetPurchaseOrderDTO{
+			ID:            purchaseOrder.ID,
+			SellerID:      purchaseOrder.SellerID,
+			CustomerID:    purchaseOrder.CustomerID,
+			ResponsibleID: purchaseOrder.ResponsibleID,
+			DateTime:      purchaseOrder.DateTime,
+			SubTotal:      purchaseOrder.SubTotal,
+			Total:         purchaseOrder.Total,
+			OrderStateID:  purchaseOrder.OrderStateID,
+			Items:         extractPurchaseOrderBillingItems(purchaseOrder.Items),
+			Discounts:     extractDiscountIds(purchaseOrder.Discounts),
+			Taxes:         extractTaxIds(purchaseOrder.Taxes),
+		})
 	}
 
-	c.JSON(http.StatusOK, purchaseOrdersDTO)
+	c.JSON(http.StatusOK, purchaseOrderDTOs)
 }
 
 func (poc *PurchaseOrderController) UpdatePurchaseOrderState(c *gin.Context) {
@@ -203,6 +219,7 @@ func (poc *PurchaseOrderController) UpdatePurchaseOrderState(c *gin.Context) {
 	if !poc.Auth.CheckPermission(c, permissionId) {
 		return
 	}
+
 	id := c.Param("id")
 
 	var request struct {
@@ -220,7 +237,7 @@ func (poc *PurchaseOrderController) UpdatePurchaseOrderState(c *gin.Context) {
 		return
 	}
 
-	orderDTO := dtos.GetPurchaseOrderDTO{
+	purchaseOrderDTO := dtos.GetPurchaseOrderDTO{
 		ID:            purchaseOrder.ID,
 		SellerID:      purchaseOrder.SellerID,
 		CustomerID:    purchaseOrder.CustomerID,
@@ -229,62 +246,65 @@ func (poc *PurchaseOrderController) UpdatePurchaseOrderState(c *gin.Context) {
 		SubTotal:      purchaseOrder.SubTotal,
 		Total:         purchaseOrder.Total,
 		OrderStateID:  purchaseOrder.OrderStateID,
+		Items:         extractPurchaseOrderBillingItems(purchaseOrder.Items),
+		Discounts:     extractDiscountIds(purchaseOrder.Discounts),
+		Taxes:         extractTaxIds(purchaseOrder.Taxes),
 	}
 
-	c.JSON(http.StatusOK, orderDTO)
+	c.JSON(http.StatusOK, purchaseOrderDTO)
 }
 
-func (poc *PurchaseOrderController) UpdatePurchaseOrder(c *gin.Context) {
-	permissionId := config.PERMISSION_UPDATE_PURCHASE_ORDER
+/*func (poc *PurchaseOrderController) UpdatePurchaseOrder(c *gin.Context) {
+    permissionId := config.PERMISSION_UPDATE_PURCHASE_ORDER
 
-	if !poc.Auth.CheckPermission(c, permissionId) {
-		return
-	}
+    if !poc.Auth.CheckPermission(c, permissionId) {
+        return
+    }
 
-	id := c.Param("id")
+    id := c.Param("id")
 
-	var dto dtos.UpdatePurchaseOrderDTO
-	if err := c.ShouldBindJSON(&dto); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
+    var dto dtos.UpdatePurchaseOrderDTO
+    if err := c.ShouldBindJSON(&dto); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
 
-	purchaseOrder, err := poc.Service.GetPurchaseOrderByID(id)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Purchase order not found"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
-		return
-	}
+    purchaseOrder, err := poc.Service.GetPurchaseOrderByID(id)
+    if err != nil {
+        if errors.Is(err, gorm.ErrRecordNotFound) {
+            c.JSON(http.StatusNotFound, gin.H{"error": "Purchase order not found"})
+            return
+        }
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+        return
+    }
 
-	purchaseOrder.SellerID = dto.SellerID
-	purchaseOrder.CustomerID = dto.CustomerID
-	purchaseOrder.ResponsibleID = dto.ResponsibleID
-	purchaseOrder.DateTime = dto.DateTime
-	purchaseOrder.SubTotal = dto.SubTotal
-	purchaseOrder.Total = dto.Total
-	purchaseOrder.OrderStateID = dto.OrderStateID
+    purchaseOrder.SellerID = dto.SellerID
+    purchaseOrder.CustomerID = dto.CustomerID
+    purchaseOrder.ResponsibleID = dto.ResponsibleID
+    purchaseOrder.DateTime = dto.DateTime
+    purchaseOrder.Items = extractPurchaseOrderBillingItems(dto.Items)
+    purchaseOrder.Discounts = dto.Discounts
+    purchaseOrder.Taxes = dto.Taxes
 
-	err = poc.Service.UpdatePurchaseOrder(purchaseOrder)
-	var dtoPurchaseOrder dtos.GetPurchaseOrderDTO
+    updatedOrder, err := poc.Service.UpdatePurchaseOrder(purchaseOrder)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+        return
+    }
 
-	dtoPurchaseOrder.ID = purchaseOrder.ID
-	dtoPurchaseOrder.SellerID = purchaseOrder.SellerID
-	dtoPurchaseOrder.CustomerID = purchaseOrder.CustomerID
-	dtoPurchaseOrder.ResponsibleID = purchaseOrder.ResponsibleID
-	dtoPurchaseOrder.DateTime = purchaseOrder.DateTime
-	dtoPurchaseOrder.SubTotal = purchaseOrder.SubTotal
-	dtoPurchaseOrder.Total = purchaseOrder.Total
-	dtoPurchaseOrder.OrderStateID = purchaseOrder.OrderStateID
+    var response dtos.GetPurchaseOrderDTO
+    response.ID = updatedOrder.ID
+    response.SellerID = updatedOrder.SellerID
+    response.CustomerID = updatedOrder.CustomerID
+    response.ResponsibleID = updatedOrder.ResponsibleID
+    response.DateTime = updatedOrder.DateTime
+    response.Items = extractBillingItems(updatedOrder.Items)
+    response.Discounts = updatedOrder.Discounts
+    response.Taxes = updatedOrder.Taxes
 
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
-		return
-	}
-	c.JSON(http.StatusOK, dtoPurchaseOrder)
-}
+    c.JSON(http.StatusOK, response)
+}*/
 
 func (poc *PurchaseOrderController) CreatePurchaseOrder(c *gin.Context) {
 	permissionId := config.PERMISSION_CREATE_PURCHASE_ORDER
@@ -294,37 +314,44 @@ func (poc *PurchaseOrderController) CreatePurchaseOrder(c *gin.Context) {
 	}
 
 	var dto dtos.CreatePurchaseOrderDTO
+	//body, _ := ioutil.ReadAll(c.Request.Body)
+	//fmt.Println("JSON recibido:", string(body))
+
 	if err := c.ShouldBindJSON(&dto); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"})
 		return
 	}
 
-	newOrder := models.PurchaseOrder{
-		SellerID:      dto.SellerID,
-		CustomerID:    dto.CustomerID,
-		ResponsibleID: dto.ResponsibleID,
-		DateTime:      dto.DateTime,
-		SubTotal:      dto.SubTotal,
-		Total:         dto.Total,
-		OrderStateID:  dto.OrderStateID,
-	}
-
-	createdOrder, err := poc.Service.CreatePurchaseOrder(&newOrder)
+	purchaseOrder, err := poc.Service.CreatePurchaseOrder(&dto)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create purchase order"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	orderDTO := dtos.GetPurchaseOrderDTO{
-		ID:            createdOrder.ID,
-		SellerID:      createdOrder.SellerID,
-		CustomerID:    createdOrder.CustomerID,
-		ResponsibleID: createdOrder.ResponsibleID,
-		DateTime:      createdOrder.DateTime,
-		SubTotal:      createdOrder.SubTotal,
-		Total:         createdOrder.Total,
-		OrderStateID:  createdOrder.OrderStateID,
+	purchaseOrderDTO := dtos.GetPurchaseOrderDTO{
+		ID:            purchaseOrder.ID,
+		SellerID:      purchaseOrder.SellerID,
+		CustomerID:    purchaseOrder.CustomerID,
+		ResponsibleID: purchaseOrder.ResponsibleID,
+		DateTime:      purchaseOrder.DateTime,
+		SubTotal:      purchaseOrder.SubTotal,
+		Total:         purchaseOrder.Total,
+		OrderStateID:  purchaseOrder.OrderStateID,
+		Items:         extractPurchaseOrderBillingItems(purchaseOrder.Items),
+		Discounts:     extractDiscountIds(purchaseOrder.Discounts),
+		Taxes:         extractTaxIds(purchaseOrder.Taxes),
 	}
 
-	c.JSON(http.StatusCreated, orderDTO)
+	c.JSON(http.StatusCreated, purchaseOrderDTO)
+}
+
+func extractPurchaseOrderBillingItems(items []models.PurchaseOrderItem) []dtos.BillingItemDTO {
+	var billingItems []dtos.BillingItemDTO
+	for _, item := range items {
+		billingItems = append(billingItems, dtos.BillingItemDTO{
+			ID:    item.ItemID,
+			Stock: item.Amount,
+		})
+	}
+	return billingItems
 }

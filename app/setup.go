@@ -200,8 +200,15 @@ func setUpOrderStateTypeRouter() {
 
 func setUpPurchaseOrderRouter() {
 	purchaseOrderRepo := repositories.NewPurchaseOrderRepository(db)
-	purchaseOrderService := services.NewPurchaseOrderService(purchaseOrderRepo)
+	itemRepo := repositories.NewItemRepository(db)
+	billingRepo := repositories.NewItemRepository(db)
+	discountRepo := repositories.NewDiscountTypeRepository(db)
+	taxRepo := repositories.NewTaxTypeRepository(db)
+
+	billingService := services.NewBillingService(billingRepo, discountRepo, taxRepo)
+	purchaseOrderService := services.NewPurchaseOrderService(purchaseOrderRepo, itemRepo, billingService)
 	purchaseOrderController := controllers.NewPurchaseOrderController(purchaseOrderService, authUtil)
+
 	routes.RegisterPurchaseOrderRoutes(router, purchaseOrderController)
 }
 

@@ -44,7 +44,7 @@ func (ic *InvoiceController) GetAllInvoices(c *gin.Context) {
 			CustomerID:     invoice.CustomerID,
 			Subtotal:       invoice.Subtotal,
 			Total:          invoice.Total,
-			Items:          extractBillingItems(invoice.Items),
+			Items:          extractInvoiceBillingItems(invoice.Items),
 			Discounts:      extractDiscountIds(invoice.Discounts),
 			Taxes:          extractTaxIds(invoice.Taxes),
 		})
@@ -80,7 +80,7 @@ func (ic *InvoiceController) GetInvoiceByID(c *gin.Context) {
 		CustomerID:     invoice.CustomerID,
 		Subtotal:       invoice.Subtotal,
 		Total:          invoice.Total,
-		Items:          extractBillingItems(invoice.Items),
+		Items:          extractInvoiceBillingItems(invoice.Items),
 		Discounts:      extractDiscountIds(invoice.Discounts),
 		Taxes:          extractTaxIds(invoice.Taxes),
 	}
@@ -117,7 +117,7 @@ func (ic *InvoiceController) SearchInvoiceByID(c *gin.Context) {
 			CustomerID:     invoice.CustomerID,
 			Subtotal:       invoice.Subtotal,
 			Total:          invoice.Total,
-			Items:          extractBillingItems(invoice.Items),
+			Items:          extractInvoiceBillingItems(invoice.Items),
 			Discounts:      extractDiscountIds(invoice.Discounts),
 			Taxes:          extractTaxIds(invoice.Taxes),
 		})
@@ -154,7 +154,7 @@ func (ic *InvoiceController) SearchInvoiceByCustomerPersonalId(c *gin.Context) {
 			CustomerID:     invoice.CustomerID,
 			Subtotal:       invoice.Subtotal,
 			Total:          invoice.Total,
-			Items:          extractBillingItems(invoice.Items),
+			Items:          extractInvoiceBillingItems(invoice.Items),
 			Discounts:      extractDiscountIds(invoice.Discounts),
 			Taxes:          extractTaxIds(invoice.Taxes),
 		})
@@ -189,7 +189,7 @@ func (ic *InvoiceController) CreateInvoice(c *gin.Context) {
 		CustomerID:     invoice.CustomerID,
 		Subtotal:       invoice.Subtotal,
 		Total:          invoice.Total,
-		Items:          extractBillingItems(invoice.Items),
+		Items:          extractInvoiceBillingItems(invoice.Items),
 		Discounts:      extractDiscountIds(invoice.Discounts),
 		Taxes:          extractTaxIds(invoice.Taxes),
 	}
@@ -198,7 +198,7 @@ func (ic *InvoiceController) CreateInvoice(c *gin.Context) {
 	c.JSON(http.StatusCreated, invoiceDTO)
 }
 
-func extractBillingItems(items []models.InvoiceItem) []dtos.BillingItemDTO {
+func extractInvoiceBillingItems(items []models.InvoiceItem) []dtos.BillingItemDTO {
 	var billingItems []dtos.BillingItemDTO
 	for _, item := range items {
 		billingItems = append(billingItems, dtos.BillingItemDTO{
