@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -24,6 +25,7 @@ func NewPurchaseOrderController(service *services.PurchaseOrderService, auth *ut
 }
 
 func (poc *PurchaseOrderController) GetPurchaseOrderByID(c *gin.Context) {
+
 	permissionId := config.PERMISSION_GET_PURCHASE_ORDER_BY_ID
 
 	if err := poc.Log.RegisterLog(c, "Attempting to retrieve Purchase Order by ID"); err != nil {
@@ -308,17 +310,19 @@ func (poc *PurchaseOrderController) GetPurchaseOrdersBySellerID(c *gin.Context) 
 	c.JSON(http.StatusOK, purchaseOrderDTOs)
 }
 
-func (poc *PurchaseOrderController) UpdatePurchaseOrderState(c *gin.Context) {
+func (poc *PurchaseOrderController) ChangePurchaseOrderState(c *gin.Context) {
 	permissionId := config.PERMISSION_UPDATE_PURCHASE_ORDER_STATE
 
 	if err := poc.Log.RegisterLog(c, "Attempting to update Purchase Order state"); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error registering log"})
+
 		return
 	}
 
 	if !poc.Auth.CheckPermission(c, permissionId) {
 		_ = poc.Log.RegisterLog(c, "Permission denied for UpdatePurchaseOrderState")
 		c.JSON(http.StatusForbidden, gin.H{"error": "Permission denied"})
+
 		return
 	}
 
@@ -331,16 +335,20 @@ func (poc *PurchaseOrderController) UpdatePurchaseOrderState(c *gin.Context) {
 	if err := c.ShouldBindJSON(&request); err != nil {
 		_ = poc.Log.RegisterLog(c, "Error binding JSON for UpdatePurchaseOrderState: "+err.Error())
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+
 		return
 	}
 
-	purchaseOrder, err := poc.Service.UpdatePurchaseOrderState(id, request.OrderStateID)
+	orderStateIDStr := strconv.Itoa(request.OrderStateID)
+	purchaseOrder, err := poc.Service.ChangePurchaseOrderState(id, orderStateIDStr)
+
 	if err != nil {
-		_ = poc.Log.RegisterLog(c, "Purchase Order not found with ID: "+id)
-		c.JSON(http.StatusNotFound, gin.H{"error": "Purchase order not found"})
+		_ = poc.Log.RegisterLog(c, err.Error())
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+
 		return
 	}
-
+	fmt.Println(purchaseOrder.OrderStateID)
 	purchaseOrderDTO := dtos.GetPurchaseOrderDTO{
 		ID:            purchaseOrder.ID,
 		SellerID:      purchaseOrder.SellerID,

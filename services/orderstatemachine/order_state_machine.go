@@ -3,29 +3,37 @@ package orderstatemachine
 import (
 	"fmt"
 	"totesbackend/models"
+	"totesbackend/repositories"
+
+	"gorm.io/gorm"
 )
 
 type OrderStateMachine struct {
-	currentState  OrderState
-	purchaseOrder *models.PurchaseOrder
+	DB                *gorm.DB
+	CurrentState      OrderState
+	PurchaseOrder     *models.PurchaseOrder
+	ItemRepo          *repositories.ItemRepository
+	PurchaseOrderRepo *repositories.PurchaseOrderRepository
 }
 
 // NewStateMachine construye la máquina y setea el estado actual según el estado de la orden
-func NewStateMachine(po *models.PurchaseOrder) (*OrderStateMachine, error) {
+func NewStateMachine(po *models.PurchaseOrder, ItemRepo *repositories.ItemRepository, PurchaseOrderRepo *repositories.PurchaseOrderRepository) (*OrderStateMachine, error) {
 	sm := &OrderStateMachine{
-		purchaseOrder: po,
+		PurchaseOrder:     po,
+		ItemRepo:          ItemRepo,
+		PurchaseOrderRepo: PurchaseOrderRepo,
 	}
 
 	// Determinar estado inicial en base al OrderStateID de la orden
 	switch po.OrderStateID {
 	case 1:
-		sm.currentState = NewIssuedState(sm)
+		sm.CurrentState = NewIssuedState(sm)
 	case 2:
-		sm.currentState = NewInTransitState(sm)
+		sm.CurrentState = NewInTransitState(sm)
 	case 3:
-		sm.currentState = NewCancelledState(sm)
+		sm.CurrentState = NewCancelledState(sm)
 	case 4:
-		sm.currentState = NewApprovedState(sm)
+		sm.CurrentState = NewApprovedState(sm)
 	default:
 		return nil, fmt.Errorf("unknown state: %d", po.OrderStateID)
 	}
@@ -34,9 +42,9 @@ func NewStateMachine(po *models.PurchaseOrder) (*OrderStateMachine, error) {
 }
 
 func (sm *OrderStateMachine) GetCurrentState() OrderState {
-	return sm.currentState
+	return sm.CurrentState
 }
 
-func (sm *OrderStateMachine) ChangeState(target OrderState) error {
-	return sm.currentState.ChangeState(target)
+func (sm *OrderStateMachine) ChangeState(stateID string) error {
+	return sm.CurrentState.ChangeState(stateID)
 }

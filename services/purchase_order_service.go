@@ -6,6 +6,7 @@ import (
 	"totesbackend/dtos"
 	"totesbackend/models"
 	"totesbackend/repositories"
+	"totesbackend/services/orderstatemachine"
 )
 
 type PurchaseOrderService struct {
@@ -86,8 +87,22 @@ func (s *PurchaseOrderService) GetPurchaseOrdersBySellerID(sellerID string) ([]m
 	return s.PurchaseOrderRepo.GetPurchaseOrdersBySellerID(sellerID)
 }
 
-func (s *PurchaseOrderService) UpdatePurchaseOrderState(id string, state int) (*models.PurchaseOrder, error) {
-	return s.PurchaseOrderRepo.UpdatePurchaseOrderState(id, state)
+func (s *PurchaseOrderService) ChangePurchaseOrderState(id string, targetStateID string) (*models.PurchaseOrder, error) {
+	po, err := s.PurchaseOrderRepo.GetPurchaseOrderByID(id)
+	if err != nil {
+		return nil, errors.New("orden de compra no encontrada con ID: " + id)
+	}
+
+	stateMachine, err := orderstatemachine.NewStateMachine(po, s.ItemRepo, s.PurchaseOrderRepo)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := stateMachine.ChangeState(targetStateID); err != nil {
+		return nil, err
+	}
+
+	return stateMachine.PurchaseOrder, nil
 }
 
 func (s *PurchaseOrderService) UpdatePurchaseOrder(purchaseOrder *models.PurchaseOrder) error {

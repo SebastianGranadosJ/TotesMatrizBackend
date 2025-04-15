@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"errors"
+	"strconv"
 	"time"
 	"totesbackend/dtos"
 	"totesbackend/models"
@@ -123,32 +124,6 @@ func (r *PurchaseOrderRepository) SearchPurchaseOrdersByID(query string) ([]mode
 	return purchaseOrders, nil
 }
 
-func (r *PurchaseOrderRepository) UpdatePurchaseOrderState(id string, state int) (*models.PurchaseOrder, error) {
-	var purchaseOrder models.PurchaseOrder
-
-	// Preload completo de todas las relaciones
-	if err := r.DB.Preload("Seller").
-		Preload("Responsible").
-		Preload("Customer").
-		Preload("OrderState").
-		Preload("Items.Item").
-		Preload("Discounts").
-		Preload("Taxes").
-		First(&purchaseOrder, "id = ?", id).Error; err != nil {
-		return nil, err
-	}
-
-	// Actualizar el estado
-	purchaseOrder.OrderState.ID = state
-
-	// Guardar la actualización
-	if err := r.DB.Save(&purchaseOrder).Error; err != nil {
-		return nil, err
-	}
-
-	return &purchaseOrder, nil
-}
-
 func (r *PurchaseOrderRepository) UpdatePurchaseOrder(purchaseOrder *models.PurchaseOrder) error {
 	var existingPurchaseOrder models.PurchaseOrder
 
@@ -186,16 +161,6 @@ func (r *PurchaseOrderRepository) CreatePurchaseOrder(dto *dtos.CreatePurchaseOr
 	tx := r.DB.Begin()
 	if tx.Error != nil {
 		return nil, tx.Error
-	}
-
-	// Restar stock de los Items
-	for _, billingItem := range dto.Items {
-		if err := tx.Model(&models.Item{}).
-			Where("id = ?", billingItem.ID).
-			UpdateColumn("stock", gorm.Expr("stock - ?", billingItem.Stock)).Error; err != nil {
-			tx.Rollback()
-			return nil, err
-		}
 	}
 
 	// Crear PurchaseOrder
@@ -256,4 +221,38 @@ func (r *PurchaseOrderRepository) CreatePurchaseOrder(dto *dtos.CreatePurchaseOr
 	}
 
 	return &fullPurchaseOrder, nil
+}
+
+func (r *PurchaseOrderRepository) ChangePurchaseOrderState(id string, state string) (*models.PurchaseOrder, error) {
+	var purchaseOrder models.PurchaseOrder
+
+	// Buscar solo por ID sin preloads inicialmente
+	if err := r.DB.First(&purchaseOrder, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+
+	// Convertir el string del estado a entero
+	stateInt, err := strconv.Atoi(state)
+	if err != nil {
+		return nil, errors.New("invalid state ID: " + err.Error())
+	}
+
+	// Actualizar solo el campo 'order_state_id'
+	if err := r.DB.Model(&purchaseOrder).Update("order_state_id", stateInt).Error; err != nil {
+		return nil, err
+	}
+
+	// Recargar la orden completa con sus relaciones
+	if err := r.DB.Preload("Seller").
+		Preload("Responsible").
+		Preload("Customer").
+		Preload("OrderState").
+		Preload("Items.Item").
+		Preload("Discounts").
+		Preload("Taxes").
+		First(&purchaseOrder, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+
+	return &purchaseOrder, nil
 }

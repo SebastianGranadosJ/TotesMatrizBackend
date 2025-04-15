@@ -105,3 +105,21 @@ func (r *ItemRepository) CreateItem(item *models.Item) (*models.Item, error) {
 	}
 	return item, nil
 }
+
+func (r *ItemRepository) SubtractItemsFromInventory(itemID string, amount int) error {
+	if err := r.DB.Model(&models.Item{}).
+		Where("id = ?", itemID).
+		UpdateColumn("stock", gorm.Expr("stock - ?", amount)).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *ItemRepository) ReturnItemsToInventory(itemID string, amount int) error {
+	if err := r.DB.Model(&models.Item{}).
+		Where("id = ?", itemID).
+		UpdateColumn("stock", gorm.Expr("stock + ?", amount)).Error; err != nil {
+		return err
+	}
+	return nil
+}

@@ -2,7 +2,7 @@ package orderstatemachine
 
 type OrderState interface {
 	// ChangeState contiene la lógica para verificar y realizar una transición válida
-	ChangeState(target OrderState) error
+	ChangeState(stateID string) error
 
 	// GetId retorna el ID del estado (relacionado con OrderStateType.ID)
 	GetId() int

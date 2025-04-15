@@ -1,6 +1,9 @@
 package orderstatemachine
 
-import "totesbackend/models"
+import (
+	"errors"
+	"totesbackend/models"
+)
 
 type CancelledState struct {
 	context *OrderStateMachine
@@ -17,9 +20,8 @@ func NewCancelledState(context *OrderStateMachine) *CancelledState {
 	}
 }
 
-func (s *CancelledState) ChangeState(target OrderState) error {
-	// lógica de transición
-	return nil
+func (s *CancelledState) ChangeState(stateID string) error {
+	return errors.New("cannot change state: cancelled orders cannot transition to another state")
 }
 
 func (s *CancelledState) GetId() int {

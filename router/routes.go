@@ -146,7 +146,7 @@ func RegisterPurchaseOrderRoutes(router *gin.Engine, controller *controllers.Pur
 	router.GET("/purchase-orders/seller/:sellerID", controller.GetPurchaseOrdersBySellerID)
 	router.GET("/purchase-orders/state/:stateID", controller.GetPurchaseOrdersByStateID)
 	router.POST("/purchase-orders", controller.CreatePurchaseOrder)
-	router.PATCH("/purchase-orders/:id/state", controller.UpdatePurchaseOrderState)
+	router.PATCH("/purchase-orders/:id/state", controller.ChangePurchaseOrderState)
 
 }
 

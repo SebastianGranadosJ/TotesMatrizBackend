@@ -1,6 +1,9 @@
 package orderstatemachine
 
-import "totesbackend/models"
+import (
+	"errors"
+	"totesbackend/models"
+)
 
 type ApprovedState struct {
 	context *OrderStateMachine
@@ -17,9 +20,8 @@ func NewApprovedState(context *OrderStateMachine) *ApprovedState {
 	}
 }
 
-func (s *ApprovedState) ChangeState(target OrderState) error {
-	// lógica de transición
-	return nil
+func (s *ApprovedState) ChangeState(stateID string) error {
+	return errors.New("cannot change state: approved orders cannot transition to another state")
 }
 
 func (s *ApprovedState) GetId() int {
